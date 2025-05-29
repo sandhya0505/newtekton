@@ -1,0 +1,48 @@
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: build-and-push-pipeline
+spec:
+  params:
+    - name: repo-url
+    - name: revision
+    - name: image-url
+  workspaces:
+    - name: shared-workspace
+  tasks:
+    - name: clone
+      taskRef:
+        name: git-clone
+      params:
+        - name: url
+          value: $(params.repo-url)
+        - name: revision
+          value: $(params.revision)
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+
+    - name: build
+      runAfter: [clone]
+      taskRef:
+        name: kaniko-build
+      params:
+        - name: image-url
+          value: $(params.image-url)
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+
+    - name: update-deployment
+      runAfter: [build]
+      taskRef:
+        name: update-deployment-git
+      params:
+        - name: image-url
+          value: $(params.image-url)
+        - name: git-url
+          value: https://github.com/sandhya0505/tekton-argocd.git
+        - name: branch
+          value: main
+        - name: file-path
+          value: k8sdeployment.yaml

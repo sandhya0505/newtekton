@@ -1,0 +1,30 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: update-deployment-git
+spec:
+  params:
+    - name: image-url
+    - name: git-url
+    - name: branch
+    - name: file-path
+  steps:
+    - name: update-file
+      image: alpine/git
+      script: |
+        git config --global user.email "tekton@bot.com"
+        git config --global user.name "Tekton Bot"
+        git clone $(params.git-url) repo
+        cd repo
+        git checkout $(params.branch)
+        sed -i "s|image: .*|image: $(params.image-url)|g" $(params.file-path)
+        git add $(params.file-path)
+        git commit -m "Update image to $(params.image-url)"
+        git push https://$(cat /credentials/username):$(cat /credentials/password)@github.com/sandhya0505/tekton-argocd.git $(params.branch)
+      volumeMounts:
+        - name: git-credentials
+          mountPath: /credentials
+  volumes:
+    - name: git-credentials
+      secret:
+        secretName: git-credentials

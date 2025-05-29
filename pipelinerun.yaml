@@ -1,0 +1,24 @@
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  name: build-and-push-run
+spec:
+  pipelineRef:
+    name: build-and-push-pipeline
+  params:
+    - name: repo-url
+      value: https://github.com/sandhya0505/tekton-argocd.git
+    - name: revision
+      value: main
+    - name: image-url
+      value: aksbootcampregistry.azurecr.io/myapp:latest
+  workspaces:
+    - name: shared-workspace
+      volumeClaimTemplate:
+        metadata:
+          name: build-pvc
+        spec:
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 1Gi
