@@ -1,13 +1,27 @@
-# Dockerfile
-FROM python:3.10-slim
+FROM python:2.7
 
-WORKDIR /app
+# Creating Application Source Code Directory
+RUN mkdir -p /usr/src/app
 
-COPY requirements.txt ./
+# Setting Home Directory for containers
+WORKDIR /usr/src/app
+
+# Installing python dependencies
+COPY requirements.txt /usr/src/app/
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+# Copying src code to Container
+COPY . /usr/src/app
 
-EXPOSE 5000
+# Application Environment variables
+#ENV APP_ENV development
+ENV PORT 8080
 
-CMD ["python", "app.py"]
+# Exposing Ports
+EXPOSE $PORT
+
+# Setting Persistent data
+VOLUME ["/app-data"]
+
+# Running Python Application
+CMD gunicorn -b :$PORT -c gunicorn.conf.py main:app
